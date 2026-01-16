@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Real-Time Stock Dashboard - Complete</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            font-size: 14px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .status.connected { background: rgba(74, 222, 128, 0.3); color: #4ade80; }
+        .status.disconnected { background: rgba(248, 113, 113, 0.3); color: #f87171; }
+        .status.connecting { background: rgba(251, 191, 36, 0.3); color: #fbbf24; }
+        
+        .controls {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-section label {
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .symbol-checkbox {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 12px;
+            background: #f3f4f6;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .symbol-checkbox:hover {
+            background: #e5e7eb;
+        }
+        
+        .symbol-checkbox input {
+            cursor: pointer;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .stock-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+            position: relative;
+        }
+        
+        .stock-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stock-card.updated {
+            animation: pulse 0.5s;
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .symbol {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .price {
+            font-size: 36px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .change-indicator {
+            font-size: 18px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        .change-indicator.up {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .change-indicator.down {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .change-indicator.unchanged {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        .source {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .timestamp {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 10px;
+        }
+        
+        .new-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #fbbf24;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .stats {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 10px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Real-Time Stock Price Dashboard</h1>
+        <div class="status connecting" id="status">Connecting...</div>
+        
+        <div class="controls">
+            <div class="filter-section">
+                <label>Filter by Symbol:</label>
+                <label class="symbol-checkbox">
+                    <input type="checkbox" value="AAPL" onchange="updateFilter()"> AAPL
+                </label>
+                <label class="symbol-checkbox">
+                    <input type="checkbox" value="GOOGL" onchange="updateFilter()"> GOOGL
+                </label>
+                <label class="symbol-checkbox">
+                    <input type="checkbox" value="MSFT" onchange="updateFilter()"> MSFT
+                </label>
+                <button onclick="clearFilter()">Show All</button>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value" id="updateCount">0</span>
+                    <span class="stat-label">Updates Received</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="stockCount">0</span>
+                    <span class="stat-label">Unique Stocks</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="sourceCount">0</span>
+                    <span class="stat-label">Data Sources</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="gainers">0</span>
+                    <span class="stat-label">Gainers</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="losers">0</span>
+                    <span class="stat-label">Losers</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stock-grid" id="stocks"></div>
+    </div>
+
+    <script>
+        let ws;
+        const stocks = new Map();
+        const statusEl = document.getElementById('status');
+        const stocksEl = document.getElementById('stocks');
+        const updateCountEl = document.getElementById('updateCount');
+        const stockCountEl = document.getElementById('stockCount');
+        const sourceCountEl = document.getElementById('sourceCount');
+        const gainersEl = document.getElementById('gainers');
+        const losersEl = document.getElementById('losers');
+        
+        let updateCount = 0;
+        const sources = new Set();
+        let currentFilter = [];
+
+        function updateStatus(text, className) {
+            statusEl.textContent = text;
+            statusEl.className = `status ${className}`;
+        }
+
+        function updateFilter() {
+            const checkboxes = document.querySelectorAll('.symbol-checkbox input:checked');
+            const selectedSymbols = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (selectedSymbols.length > 0) {
+                currentFilter = selectedSymbols;
+                
+                // Send subscription message to server
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    const msg = {
+                        type: "subscribe",
+                        symbols: selectedSymbols
+                    };
+                    ws.send(JSON.stringify(msg));
+                    console.log('Subscribed to:', selectedSymbols);
+                }
+            } else {
+                clearFilter();
+            }
+        }
+
+        function clearFilter() {
+            // Uncheck all
+            document.querySelectorAll('.symbol-checkbox input').forEach(cb => cb.checked = false);
+            currentFilter = [];
+            
+            // Send unsubscribe message
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: "unsubscribe" }));
+                console.log('Unsubscribed - receiving all symbols');
+            }
+        }
+
+        function connect() {
+            updateStatus('🟡 Connecting...', 'connecting');
+            
+            ws = new WebSocket('ws://127.0.0.1:8080');
+
+            ws.onopen = () => {
+                updateStatus('🟢 Connected - Real-Time Updates', 'connected');
+                
+                // If we had a filter, reapply it
+                if (currentFilter.length > 0) {
+                    ws.send(JSON.stringify({
+                        type: "subscribe",
+                        symbols: currentFilter
+                    }));
+                }
+            };
+
+            ws.onclose = () => {
+                updateStatus('🔴 Disconnected - Reconnecting...', 'disconnected');
+                setTimeout(connect, 3000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+
+                    if (data.type === 'connected') {
+                        console.log(data.message);
+                        return;
+                    }
+
+                    if (data.type === 'subscribed') {
+                        console.log('Subscription confirmed:', data.symbols);
+                        return;
+                    }
+
+                    if (data.type === 'unsubscribed') {
+                        console.log('Unsubscribed from filters');
+                        return;
+                    }
+
+                    // Price update
+                    if (data.symbol && data.price && data.source) {
+                        updateCount++;
+                        sources.add(data.source);
+                        
+                        const key = `${data.symbol}-${data.source}`;
+                        const isNew = !stocks.has(key);
+                        stocks.set(key, { ...data, isNew });
+                        
+                        // Clear "NEW" badge after 3 seconds
+                        if (isNew) {
+                            setTimeout(() => {
+                                const stock = stocks.get(key);
+                                if (stock) {
+                                    stock.isNew = false;
+                                    renderStocks();
+                                }
+                            }, 3000);
+                        }
+                        
+                        renderStocks();
+                        updateStats();
+                    }
+                } catch (e) {
+                    console.error('Error parsing message:', e);
+                }
+            };
+        }
+
+        function renderStocks() {
+            const sortedStocks = Array.from(stocks.values())
+                .sort((a, b) => {
+                    const symbolCompare = a.symbol.localeCompare(b.symbol);
+                    if (symbolCompare !== 0) return symbolCompare;
+                    return a.source.localeCompare(b.source);
+                });
+
+            stocksEl.innerHTML = sortedStocks.map(stock => {
+                const date = new Date(stock.timestamp * 1000);
+                
+                let changeHtml = '';
+                if (stock.change_percent !== undefined && stock.direction) {
+                    const arrow = stock.direction === 'up' ? '⬆️' : 
+                                 stock.direction === 'down' ? '⬇️' : '➡️';
+                    const changeClass = stock.direction;
+                    changeHtml = `<span class="change-indicator ${changeClass}">${arrow} ${Math.abs(stock.change_percent).toFixed(2)}%</span>`;
+                }
+                
+                const newBadge = stock.isNew ? '<div class="new-badge">NEW</div>' : '';
+                
+                return `
+                    <div class="stock-card updated">
+                        ${newBadge}
+                        <div class="symbol">${stock.symbol}</div>
+                        <div class="price">
+                            $${stock.price.toFixed(2)}
+                            ${changeHtml}
+                        </div>
+                        <div class="source">${stock.source}</div>
+                        <div class="timestamp">Updated: ${date.toLocaleTimeString()}</div>
+                    </div>
+                `;
+            }).join('');
+
+            setTimeout(() => {
+                document.querySelectorAll('.stock-card.updated').forEach(card => {
+                    card.classList.remove('updated');
+                });
+            }, 500);
+        }
+
+        function updateStats() {
+            updateCountEl.textContent = updateCount;
+            
+            const uniqueSymbols = new Set();
+            let gainers = 0, losers = 0;
+            
+            stocks.forEach(stock => {
+                uniqueSymbols.add(stock.symbol);
+                if (stock.direction === 'up') gainers++;
+                if (stock.direction === 'down') losers++;
+            });
+            
+            stockCountEl.textContent = uniqueSymbols.size;
+            sourceCountEl.textContent = sources.size;
+            gainersEl.textContent = gainers;
+            losersEl.textContent = losers;
+        }
+
+        connect();
+    </script>
+</body>
+</html>

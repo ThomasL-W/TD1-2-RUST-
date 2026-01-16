@@ -1,0 +1,73 @@
+warning: unused import: `chrono::Utc`
+ --> src/main.rs:5:5
+  |
+5 | use chrono::Utc;
+  |     ^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: `rust-td` (bin "rust-td") generated 1 warning (run `cargo fix --bin "rust-td"` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.60s
+warning: the following packages contain code that will be rejected by a future version of Rust: sqlx-postgres v0.7.4
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running `target/debug/rust-td --fetch-once`
+[2m2025-11-13T01:05:05.128168Z[0m [32m INFO[0m [2mrust_td[0m[2m:[0m 🚀 Starting stock price aggregator
+[2m2025-11-13T01:05:05.129542Z[0m [32m INFO[0m [2mrust_td[0m[2m:[0m 📡 Connecting to database...
+[2m2025-11-13T01:05:05.309299Z[0m [32m INFO[0m [2mrust_td[0m[2m:[0m ✅ Connected to database successfully
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Part 1: Sequential mock prices
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AAPL: $195.78
+GOOGL: $118.41
+MSFT: $170.31
+⏱️  Total elapsed time: 1.51s
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔄 Part 2: Parallel fetch from multiple APIs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[2m2025-11-13T01:05:06.815411Z[0m [32m INFO[0m [2mrust_td[0m[2m:[0m Fetching prices for AAPL...
+[2m2025-11-13T01:05:07.321699Z[0m [32m INFO[0m [1mfetch_finnhub[0m[1m{[0m[3msymbol[0m[2m=[0m"AAPL"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Finnhub - AAPL: $167.09
+[2m2025-11-13T01:05:07.323215Z[0m [32m INFO[0m [1mfetch_alpha_vantage[0m[1m{[0m[3msymbol[0m[2m=[0m"AAPL"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Alpha Vantage - AAPL: $130.64
+Results for AAPL:
+  Alpha Vantage: Ok(StockPrice { symbol: "AAPL", price: 130.6356141394608, source: "Alpha Vantage", timestamp: 1762995907 })
+  Finnhub: Ok(StockPrice { symbol: "AAPL", price: 167.08511691105028, source: "Finnhub", timestamp: 1762995907 })
+
+[2m2025-11-13T01:05:07.323323Z[0m [32m INFO[0m [2mrust_td[0m[2m:[0m Fetching prices for GOOGL...
+[2m2025-11-13T01:05:07.825054Z[0m [32m INFO[0m [1mfetch_finnhub[0m[1m{[0m[3msymbol[0m[2m=[0m"GOOGL"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Finnhub - GOOGL: $158.93
+[2m2025-11-13T01:05:07.825315Z[0m [32m INFO[0m [1mfetch_alpha_vantage[0m[1m{[0m[3msymbol[0m[2m=[0m"GOOGL"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Alpha Vantage - GOOGL: $185.91
+Results for GOOGL:
+  Alpha Vantage: Ok(StockPrice { symbol: "GOOGL", price: 185.90891753955782, source: "Alpha Vantage", timestamp: 1762995907 })
+  Finnhub: Ok(StockPrice { symbol: "GOOGL", price: 158.93095133376517, source: "Finnhub", timestamp: 1762995907 })
+
+[2m2025-11-13T01:05:07.825411Z[0m [32m INFO[0m [2mrust_td[0m[2m:[0m Fetching prices for MSFT...
+[2m2025-11-13T01:05:08.326012Z[0m [32m INFO[0m [1mfetch_alpha_vantage[0m[1m{[0m[3msymbol[0m[2m=[0m"MSFT"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Alpha Vantage - MSFT: $171.77
+[2m2025-11-13T01:05:08.326980Z[0m [32m INFO[0m [1mfetch_finnhub[0m[1m{[0m[3msymbol[0m[2m=[0m"MSFT"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Finnhub - MSFT: $181.38
+Results for MSFT:
+  Alpha Vantage: Ok(StockPrice { symbol: "MSFT", price: 171.77433777991803, source: "Alpha Vantage", timestamp: 1762995908 })
+  Finnhub: Ok(StockPrice { symbol: "MSFT", price: 181.38014935861992, source: "Finnhub", timestamp: 1762995908 })
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💾 Part 3: Saving initial results to PostgreSQL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[2m2025-11-13T01:05:08.327145Z[0m [32m INFO[0m [1mfetch_and_save_all[0m[1m{[0m[3msymbols[0m[2m=[0m["AAPL", "GOOGL", "MSFT"][1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Starting fetch cycle for 3 symbols
+[2m2025-11-13T01:05:08.828901Z[0m [32m INFO[0m [1mfetch_and_save_all[0m[1m{[0m[3msymbols[0m[2m=[0m["AAPL", "GOOGL", "MSFT"][1m}[0m[2m:[0m[1mfetch_finnhub[0m[1m{[0m[3msymbol[0m[2m=[0m"AAPL"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Finnhub - AAPL: $121.33
+[2m2025-11-13T01:05:08.829108Z[0m [32m INFO[0m [1mfetch_and_save_all[0m[1m{[0m[3msymbols[0m[2m=[0m["AAPL", "GOOGL", "MSFT"][1m}[0m[2m:[0m[1mfetch_yahoo[0m[1m{[0m[3msymbol[0m[2m=[0m"AAPL"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Yahoo Finance - AAPL: $112.97
+[2m2025-11-13T01:05:08.829152Z[0m [32m INFO[0m [1mfetch_and_save_all[0m[1m{[0m[3msymbols[0m[2m=[0m["AAPL", "GOOGL", "MSFT"][1m}[0m[2m:[0m[1mfetch_alpha_vantage[0m[1m{[0m[3msymbol[0m[2m=[0m"AAPL"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Alpha Vantage - AAPL: $107.22
+[2m2025-11-13T01:05:09.524346Z[0m [32m INFO[0m [1mfetch_and_save_all[0m[1m{[0m[3msymbols[0m[2m=[0m["AAPL", "GOOGL", "MSFT"][1m}[0m[2m:[0m[1mfetch_finnhub[0m[1m{[0m[3msymbol[0m[2m=[0m"GOOGL"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Finnhub - GOOGL: $141.95
+[2m2025-11-13T01:05:09.524753Z[0m [32m INFO[0m [1mfetch_and_save_all[0m[1m{[0m[3msymbols[0m[2m=[0m["AAPL", "GOOGL", "MSFT"][1m}[0m[2m:[0m[1mfetch_yahoo[0m[1m{[0m[3msymbol[0m[2m=[0m"GOOGL"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Yahoo Finance - GOOGL: $112.00
+[2m2025-11-13T01:05:09.524930Z[0m [32m INFO[0m [1mfetch_and_save_all[0m[1m{[0m[3msymbols[0m[2m=[0m["AAPL", "GOOGL", "MSFT"][1m}[0m[2m:[0m[1mfetch_alpha_vantage[0m[1m{[0m[3msymbol[0m[2m=[0m"GOOGL"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Alpha Vantage - GOOGL: $190.99
+[2m2025-11-13T01:05:10.035397Z[0m [32m INFO[0m [1mfetch_and_save_all[0m[1m{[0m[3msymbols[0m[2m=[0m["AAPL", "GOOGL", "MSFT"][1m}[0m[2m:[0m[1mfetch_finnhub[0m[1m{[0m[3msymbol[0m[2m=[0m"MSFT"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Finnhub - MSFT: $124.08
+[2m2025-11-13T01:05:10.035595Z[0m [32m INFO[0m [1mfetch_and_save_all[0m[1m{[0m[3msymbols[0m[2m=[0m["AAPL", "GOOGL", "MSFT"][1m}[0m[2m:[0m[1mfetch_yahoo[0m[1m{[0m[3msymbol[0m[2m=[0m"MSFT"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Yahoo Finance - MSFT: $150.81
+[2m2025-11-13T01:05:10.035641Z[0m [32m INFO[0m [1mfetch_and_save_all[0m[1m{[0m[3msymbols[0m[2m=[0m["AAPL", "GOOGL", "MSFT"][1m}[0m[2m:[0m[1mfetch_alpha_vantage[0m[1m{[0m[3msymbol[0m[2m=[0m"MSFT"[1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Alpha Vantage - MSFT: $115.57
+[2m2025-11-13T01:05:10.045077Z[0m [32m INFO[0m [1mfetch_and_save_all[0m[1m{[0m[3msymbols[0m[2m=[0m["AAPL", "GOOGL", "MSFT"][1m}[0m[2m:[0m [2mrust_td[0m[2m:[0m Completed fetch cycle
+[2m2025-11-13T01:05:10.045215Z[0m [32m INFO[0m [2mrust_td[0m[2m:[0m ✅ All prices saved to database successfully!
+[2m2025-11-13T01:05:10.045235Z[0m [32m INFO[0m [2mrust_td[0m[2m:[0m ⚡ --fetch-once flag detected, querying latest prices and exiting...
+
+╔════════════════════════════════════════════════════════════════╗
+║           LATEST PRICES IN DATABASE                           ║
+╠════════════════════════════════════════════════════════════════╣
+
+thread 'main' panicked at /home/matthieu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sqlx-core-0.7.4/src/row.rs:72:37:
+called `Result::unwrap()` on an `Err` value: ColumnDecode { index: "1", source: "mismatched types; Rust type `f64` (as SQL type `FLOAT8`) is not compatible with SQL type `NUMERIC`" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
